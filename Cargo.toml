@@ -2,7 +2,7 @@
 name = "fiducia-orm-core"
 version = "0.1.0"
 edition = "2021"
-description = "Opaque, role-aware SeaORM query boundary for fiducia-cloud"
+description = "Opaque, role-aware SeaORM query boundary for fiducia-cloud. Schema imported from oresoftware/k8s-libs-and-shared-defs."
 repository = "https://github.com/fiducia-cloud/fiducia-orm-core"
 publish = false
 

@@ -3,7 +3,7 @@
   "catalog": {
     "column_count": 244,
     "path": "schema/commercial.catalog.json",
-    "sha256": "952bb96a3867bd7b5acbb57b762d230a45e5ee4a9f0e2f341701f19c20f8433a",
+    "sha256": "fb41e8c471ac603286db798d1dea1456c8252f088fb69245a47d8032f5e0c990",
     "table_count": 22
   },
   "compatibility_repository": "fiducia-cloud/fiducia-orm-core",
@@ -14,7 +14,7 @@
   },
   "outputs": {
     "generated/commercial_diesel.rs": "2a505011e791621318b73c728397751dd35f8937f8c118a4a3afc54eff783f8a",
-    "generated/commercial_provenance.rs": "7dcc6f92e6bf2827cf8adce90136cc49ac77299ae595a935e0d80d95f1da747c",
+    "generated/commercial_provenance.rs": "d8115035f9410d73e777f9975fb0a2ee33708e51689625dc133f723ebcb76caa",
     "generated/commercial_sea_orm.rs": "cdb332ffaa49e58edf43459fa3780f01b73ffc9fb942ba23c2d3bcfa9ab1bd3c"
   },
   "planned_editable_repository": "fiducia-cloud/fiducia-lib-core",

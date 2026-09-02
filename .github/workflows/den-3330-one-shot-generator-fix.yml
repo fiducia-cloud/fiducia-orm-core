@@ -1,0 +1,162 @@
+name: DEN-3330 one-shot generator repair
+
+on:
+  push:
+    branches:
+      - alexanderdmills/den-3330-commercial-orm-projections
+    paths:
+      - '.github/workflows/den-3330-one-shot-generator-fix.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: den-3330-one-shot-generator-fix-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repair-validate-and-clean-up:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out the existing PR branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: alexanderdmills/den-3330-commercial-orm-projections
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install the CI Rust toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+          rustup default stable
+
+      - name: Repair the generator and add regression coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          generator_path = Path('tools/generate_commercial_projections.py')
+          generator = generator_path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  '        "//! SeaORM entity projections for the `fiducia_commercial` schema.",\n'
+                  '        "//!",\n'
+                  '        "//! These are generated compatibility types, not migration authority.",',
+                  '        "// SeaORM entity projections for the `fiducia_commercial` schema.",\n'
+                  '        "//",\n'
+                  '        "// These are generated compatibility types, not migration authority.",',
+              ),
+              (
+                  '        "//! Diesel schema and query models for the `fiducia_commercial` schema.",\n'
+                  '        "//!",\n'
+                  '        "//! Composite foreign keys, checks, indexes, RLS, and triggers remain",\n'
+                  '        "//! authoritative in the canonical SQL and are intentionally not restated here.",',
+                  '        "// Diesel schema and query models for the `fiducia_commercial` schema.",\n'
+                  '        "//",\n'
+                  '        "// Composite foreign keys, checks, indexes, RLS, and triggers remain",\n'
+                  '        "// authoritative in the canonical SQL and are intentionally not restated here.",',
+              ),
+              (
+                  'f"    #[diesel(table_name = crate::generated::commercial_diesel::{schema}::{table[\'name\']})]",',
+                  'f"    #[diesel(table_name = crate::generated::commercial_diesel::{table[\'name\']})]",',
+              ),
+              (
+                  "return f'''{HEADER}//! Generated source and projection provenance.",
+                  "return f'''{HEADER}// Generated source and projection provenance.",
+              ),
+          ]
+
+          for before, after in replacements:
+              count = generator.count(before)
+              if count != 1:
+                  raise SystemExit(f'expected exactly one generator match, found {count}: {before[:80]!r}')
+              generator = generator.replace(before, after, 1)
+
+          generator_path.write_text(generator, encoding='utf-8')
+
+          test_path = Path('tests/commercial_projection_contract.rs')
+          tests = test_path.read_text(encoding='utf-8')
+          anchor = '''#[cfg(feature = "commercial-sea-orm")]
+          #[test]
+          fn every_sea_orm_model_is_reachable() {'''
+          regression = '''#[test]
+          fn generated_projection_files_are_include_safe() {
+              let provenance = include_str!("../generated/commercial_provenance.rs");
+              let sea_orm = include_str!("../generated/commercial_sea_orm.rs");
+              let diesel = include_str!("../generated/commercial_diesel.rs");
+
+              for generated in [provenance, sea_orm, diesel] {
+                  assert!(
+                      generated.lines().all(|line| !line.starts_with("//!")),
+                      "generated include surface contains an invalid top-level inner doc comment"
+                  );
+              }
+
+              assert!(
+                  !diesel.contains("commercial_diesel::fiducia_commercial::"),
+                  "Diesel derives must reference table modules emitted directly by table!"
+              );
+              assert!(diesel.contains("commercial_diesel::organizations"));
+              assert!(diesel.contains("commercial_diesel::outbox_events"));
+          }
+
+          #[cfg(feature = "commercial-sea-orm")]
+          #[test]
+          fn every_sea_orm_model_is_reachable() {'''
+          count = tests.count(anchor)
+          if count != 1:
+              raise SystemExit(f'expected one regression-test anchor, found {count}')
+          tests = tests.replace(anchor, regression, 1)
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+
+      - name: Regenerate and validate every projection surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tools/generate_commercial_projections.py
+          python3 tools/generate_commercial_projections.py
+          python3 tools/generate_commercial_projections.py --check
+          cargo fmt --all -- --check
+          cargo clippy --all-targets --all-features -- -D warnings
+          cargo test --all-features
+          if ! git ls-files --error-unmatch Cargo.lock >/dev/null 2>&1; then
+            rm -f Cargo.lock
+          fi
+
+      - name: Enforce the bounded repair diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -- '.github/workflows/den-3330-one-shot-generator-fix.yml'
+          allowed='^(\.github/workflows/den-3330-one-shot-generator-fix\.yml|tools/generate_commercial_projections\.py|tests/commercial_projection_contract\.rs|generated/commercial_(provenance|sea_orm|diesel)\.rs|commercial-projection\.lock\.json)$'
+          unexpected="$({ git diff --name-only; git ls-files --others --exclude-standard; } | sort -u | grep -Ev "${allowed}" || true)"
+          if [[ -n "${unexpected}" ]]; then
+            printf 'Unexpected repair output:\n%s\n' "${unexpected}" >&2
+            exit 1
+          fi
+          git add -- \
+            '.github/workflows/den-3330-one-shot-generator-fix.yml' \
+            'tools/generate_commercial_projections.py' \
+            'tests/commercial_projection_contract.rs' \
+            'generated/commercial_provenance.rs' \
+            'generated/commercial_sea_orm.rs' \
+            'generated/commercial_diesel.rs' \
+            'commercial-projection.lock.json'
+          git diff --cached --check
+
+      - name: Commit the validated generator repair to PR 4
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(DEN-3330): generate include-safe ORM projections'
+          git push origin HEAD:alexanderdmills/den-3330-commercial-orm-projections

@@ -2,7 +2,7 @@
 name = "fiducia-orm-core"
 version = "0.1.0"
 edition = "2021"
-description = "Opaque, role-aware SeaORM query boundary for fiducia-cloud. Schema imported from oresoftware/k8s-libs-and-shared-defs."
+description = "Opaque Fiducia ORM boundary with generated SeaORM and optional Diesel projections."
 repository = "https://github.com/fiducia-cloud/fiducia-orm-core"
 publish = false
 
@@ -12,18 +12,37 @@ name = "fiducia_orm_core"
 [features]
 # Browser-facing and other read consumers get only the opaque read context and
 # named read functions. API servers must opt into every write symbol.
-default = ["read-only"]
+default = ["read-only", "commercial-sea-orm"]
 read-only = []
-read-write = ["read-only"]
+read-write = ["read-only", "commercial-sea-orm"]
+commercial-sea-orm = []
+commercial-diesel = [
+  "dep:bigdecimal",
+  "dep:chrono",
+  "dep:diesel",
+  "dep:serde_json",
+]
 
 [dependencies]
+bigdecimal = { version = "0.4", optional = true }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"], optional = true }
+diesel = { version = "=2.3.12", default-features = false, features = [
+  "32-column-tables",
+  "chrono",
+  "numeric",
+  "postgres_backend",
+  "serde_json",
+], optional = true }
 sea-orm = { version = "1", default-features = false, features = [
   "sqlx-postgres",
   "runtime-tokio-rustls",
   "macros",
   "with-chrono",
+  "with-json",
+  "with-rust_decimal",
   "with-uuid",
 ] }
+serde_json = { version = "1", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

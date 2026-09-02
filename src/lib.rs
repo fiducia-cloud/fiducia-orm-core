@@ -34,7 +34,7 @@ pub use connection::{connect_read_write, connect_read_write_with_policy, WriteCo
 pub use error::OrmError;
 pub use generated::commercial_provenance::{
     COMMERCIAL_CATALOG_SHA256, COMMERCIAL_COLUMN_COUNT, COMMERCIAL_JSON_SCHEMA_GIT_BLOB_SHA1,
-    COMMERCIAL_SQL_GIT_BLOB_SHA1, COMMERCIAL_TABLE_COUNT, COMMERCIAL_TABLES,
+    COMMERCIAL_SQL_GIT_BLOB_SHA1, COMMERCIAL_TABLES, COMMERCIAL_TABLE_COUNT,
     COMMERCIAL_TYPESPEC_GIT_BLOB_SHA1,
 };
 pub use schema::{

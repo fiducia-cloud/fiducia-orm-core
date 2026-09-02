@@ -24,8 +24,8 @@ The normalized catalog includes table names, ordered columns, logical SQL types,
 
 The checked-in catalog currently projects all 22 `fiducia_commercial` tables and 244 columns for:
 
-- SeaORM entities, enabled by default through `commercial-sea-orm`;
-- Diesel `table!` declarations and `Queryable`/`Selectable`/`Identifiable` models, enabled with `commercial-diesel`.
+- SeaORM entities, enabled explicitly with `commercial-sea-orm`;
+- Diesel `table!` declarations and `Queryable`/`Selectable`/`Identifiable` models, enabled explicitly with `commercial-diesel`.
 
 Regenerate and verify:
 
@@ -34,7 +34,7 @@ python3 tools/generate_commercial_projections.py
 python3 tools/generate_commercial_projections.py --check
 ```
 
-Do not edit files under `generated/` manually. Change the reviewed catalog input, regenerate, and update the pinned upstream source blobs in the same pull request.
+Do not edit files under `generated/` manually. Change the reviewed catalog input, regenerate, and update the pinned upstream source blobs in the same pull request. The generator, checked-in outputs, and projection lock are tested together so included Rust modules cannot drift from the canonical catalog.
 
 These entities are low-level compatibility types. Product code should continue to use named operations under `read` and `write`; it should not pass raw ORM sessions or persistence rows across HTTP/RPC boundaries.
 
@@ -42,9 +42,12 @@ These entities are low-level compatibility types. Product code should continue t
 
 | Consumer | Feature | Public surface |
 | --- | --- | --- |
-| Web/default consumer | `read-only`, `commercial-sea-orm` (default) | `ReadContext`, role-aware connection, named functions under `read`, generated SeaORM types |
+| Web/default consumer | `read-only` (default) | `ReadContext`, role-aware connection, and named functions under `read` |
 | API server | `read-write` | Adds `WriteContext` and named functions under `write` |
+| SeaORM compatibility consumer | `commercial-sea-orm` | Generated SeaORM entities; no migration or connection authority |
 | Diesel compatibility consumer | `commercial-diesel` | Generated schema and Diesel models; no migration or connection authority |
+
+ORM projection features are independent from the read/write context features. Enabling a compatibility model must not silently grant write APIs, and enabling `read-write` must not silently select an ORM projection.
 
 Raw SeaORM/SQLx connections, entity managers, query builders, and backend error types stay private. A default consumer cannot import `WriteContext`, `connect_read_write`, or the `write` module; a compile-fail doctest enforces that. This is an intent-and-ergonomics boundary, not a security boundary: Cargo feature resolution is additive. The authoritative control is the SELECT-only database role.
 
@@ -82,6 +85,16 @@ fiducia-orm-core = {
   rev = "<merge-commit>",
   default-features = false,
   features = ["read-write"]
+}
+```
+
+SeaORM compatibility consumer:
+
+```toml
+fiducia-orm-core = {
+  git = "https://github.com/fiducia-cloud/fiducia-orm-core.git",
+  rev = "<merge-commit>",
+  features = ["commercial-sea-orm"]
 }
 ```
 

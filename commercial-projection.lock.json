@@ -10,12 +10,12 @@
   "format": "fiducia.orm-projection-lock.v1",
   "generator": {
     "path": "tools/generate_commercial_projections.py",
-    "sha256": "7883112f3b4e975984c43cd31dd4d6ba645189774c54cd51b29cd569bbc5e5f8"
+    "sha256": "e7cfcdd172e6515b74fa511759b187dcfc2fc7f3cda9aa0536c2c59a612178bd"
   },
   "outputs": {
-    "generated/commercial_diesel.rs": "2a505011e791621318b73c728397751dd35f8937f8c118a4a3afc54eff783f8a",
-    "generated/commercial_provenance.rs": "d8115035f9410d73e777f9975fb0a2ee33708e51689625dc133f723ebcb76caa",
-    "generated/commercial_sea_orm.rs": "cdb332ffaa49e58edf43459fa3780f01b73ffc9fb942ba23c2d3bcfa9ab1bd3c"
+    "generated/commercial_diesel.rs": "398ccefdbd537e1c3cdc18f947de7461c8f3ffd4c6c9aca261439d789ebea767",
+    "generated/commercial_provenance.rs": "206971cbc3a983c752c0dd42b29cd4ad2d33204bf273c7add7acdb67391d02ee",
+    "generated/commercial_sea_orm.rs": "a24280d6abc53f9560876072abe7f3df8a9285acdf4b9e0802e6e0b330d9f690"
   },
   "planned_editable_repository": "fiducia-cloud/fiducia-lib-core",
   "policy": "This lock describes generated compatibility projections only. Canonical SQL and live catalog verification remain migration authority; fiducia-lib-core becomes the editable projection authority when provisioned.",

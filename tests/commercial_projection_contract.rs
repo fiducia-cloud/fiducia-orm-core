@@ -38,6 +38,27 @@ fn commercial_projection_source_digests_are_well_formed() {
     }
 }
 
+#[test]
+fn generated_projection_files_are_include_safe() {
+    let provenance = include_str!("../generated/commercial_provenance.rs");
+    let sea_orm = include_str!("../generated/commercial_sea_orm.rs");
+    let diesel = include_str!("../generated/commercial_diesel.rs");
+
+    for generated in [provenance, sea_orm, diesel] {
+        assert!(
+            generated.lines().all(|line| !line.starts_with("//!")),
+            "generated include surface contains an invalid top-level inner doc comment"
+        );
+    }
+
+    assert!(
+        !diesel.contains("commercial_diesel::fiducia_commercial::"),
+        "Diesel derives must reference table modules emitted directly by table!"
+    );
+    assert!(diesel.contains("commercial_diesel::organizations"));
+    assert!(diesel.contains("commercial_diesel::outbox_events"));
+}
+
 #[cfg(feature = "commercial-sea-orm")]
 #[test]
 fn every_sea_orm_model_is_reachable() {

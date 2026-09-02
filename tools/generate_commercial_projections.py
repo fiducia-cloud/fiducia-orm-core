@@ -123,9 +123,9 @@ def rust_type(type_map: dict[str, str], column: dict[str, Any]) -> str:
 def render_sea_orm(catalog: dict[str, Any]) -> str:
     lines = [
         HEADER.rstrip(),
-        "//! SeaORM entity projections for the `fiducia_commercial` schema.",
-        "//!",
-        "//! These are generated compatibility types, not migration authority.",
+        "// SeaORM entity projections for the `fiducia_commercial` schema.",
+        "//",
+        "// These are generated compatibility types, not migration authority.",
         "",
     ]
     for table in catalog["tables"]:
@@ -164,10 +164,10 @@ def render_sea_orm(catalog: dict[str, Any]) -> str:
 def render_diesel(catalog: dict[str, Any]) -> str:
     lines = [
         HEADER.rstrip(),
-        "//! Diesel schema and query models for the `fiducia_commercial` schema.",
-        "//!",
-        "//! Composite foreign keys, checks, indexes, RLS, and triggers remain",
-        "//! authoritative in the canonical SQL and are intentionally not restated here.",
+        "// Diesel schema and query models for the `fiducia_commercial` schema.",
+        "//",
+        "// Composite foreign keys, checks, indexes, RLS, and triggers remain",
+        "// authoritative in the canonical SQL and are intentionally not restated here.",
         "",
     ]
 
@@ -201,7 +201,7 @@ def render_diesel(catalog: dict[str, Any]) -> str:
                 "    #[derive(",
                 "        Debug, Clone, PartialEq, diesel::Queryable, diesel::Selectable, diesel::Identifiable,",
                 "    )]",
-                f"    #[diesel(table_name = crate::generated::commercial_diesel::{schema}::{table['name']})]",
+                f"    #[diesel(table_name = crate::generated::commercial_diesel::{table['name']})]",
                 f"    #[diesel(primary_key({pk}))]",
                 "    #[diesel(check_for_backend(diesel::pg::Pg))]",
                 f"    pub struct {table['rust_model']} {{",
@@ -221,7 +221,7 @@ def render_provenance(catalog: dict[str, Any], catalog_text: str) -> str:
     tables = catalog["tables"]
     table_names = "\n".join(f'    "{table["name"]}",' for table in tables)
     column_count = sum(len(table["columns"]) for table in tables)
-    return f'''{HEADER}//! Generated source and projection provenance.
+    return f'''{HEADER}// Generated source and projection provenance.
 
 pub const COMMERCIAL_SCHEMA: &str = "{catalog["schema"]}";
 pub const COMMERCIAL_TABLE_COUNT: usize = {len(tables)};

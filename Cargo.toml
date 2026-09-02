@@ -12,7 +12,7 @@ name = "fiducia_orm_core"
 [features]
 # Browser-facing and other read consumers get only the opaque read context and
 # named read functions. API servers must opt into every write symbol.
-default = ["read-only", "commercial-sea-orm"]
+default = ["read-only"]
 read-only = []
 read-write = ["read-only", "commercial-sea-orm"]
 commercial-sea-orm = []

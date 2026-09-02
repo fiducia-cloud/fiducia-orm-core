@@ -14,7 +14,7 @@ name = "fiducia_orm_core"
 # named read functions. API servers must opt into every write symbol.
 default = ["read-only"]
 read-only = []
-read-write = ["read-only", "commercial-sea-orm"]
+read-write = ["read-only"]
 commercial-sea-orm = []
 commercial-diesel = [
   "dep:bigdecimal",

@@ -1,24 +1,25 @@
 //! # fiducia-orm-core
 //!
-//! Canonical, opaque SeaORM boundary for the `fiducia-cloud` organization.
+//! Opaque database contexts plus generated compatibility projections for the
+//! `fiducia-cloud` organization.
 //!
-//! The crate consumes the Fiducia schema slice generated from
-//! `ORESoftware/k8s-libs-and-shared-defs`; it does not own migrations or expose
-//! raw ORM sessions. Web/default consumers receive only [`ReadContext`] and
-//! named functions under [`read`]. API consumers must explicitly enable the
-//! `read-write` feature to compile [`WriteContext`] and [`write`].
+//! Canonical DDL remains outside this crate. The commercial projections are
+//! reproducibly generated from a normalized catalog pinned to reviewed SQL,
+//! JSON Schema Draft 2020-12, and TypeSpec source blobs. DEN-3330 moves editable
+//! persistence authority to `fiducia-lib-core`; until that repository is
+//! provisioned, this crate is a transitional compatibility package only.
 //!
-//! This crate never defines an independent schema and carries no migration
-//! tooling: migrations belong exclusively to the owning API server via
-//! `declarative-migrations`. The feature split expresses intent — the
-//! authoritative boundary is the web tier's SELECT-only database identity,
-//! because Cargo feature resolution is additive across a dependency graph.
+//! Web/default consumers receive only [`ReadContext`] and named functions under
+//! [`read`]. API consumers must explicitly enable the `read-write` feature to
+//! compile [`WriteContext`] and [`write`]. Raw sessions remain private.
 
 #[cfg(not(feature = "read-only"))]
 compile_error!("fiducia-orm-core requires the read-only feature; read-write includes it");
 
 mod connection;
 mod error;
+#[doc(hidden)]
+pub mod generated;
 pub mod read;
 mod schema;
 
@@ -31,8 +32,14 @@ pub use connection::{
 #[cfg(feature = "read-write")]
 pub use connection::{connect_read_write, connect_read_write_with_policy, WriteContext};
 pub use error::OrmError;
+pub use generated::commercial_provenance::{
+    COMMERCIAL_CATALOG_SHA256, COMMERCIAL_COLUMN_COUNT, COMMERCIAL_JSON_SCHEMA_GIT_BLOB_SHA1,
+    COMMERCIAL_SQL_GIT_BLOB_SHA1, COMMERCIAL_TABLE_COUNT, COMMERCIAL_TABLES,
+    COMMERCIAL_TYPESPEC_GIT_BLOB_SHA1,
+};
 pub use schema::{
-    ORG_SCHEMA, SHARED_DEFS_ORG_SLICE, SHARED_DEFS_REVISION, SHARED_DEFS_SEA_ORM_ADAPTER,
+    COMMERCIAL_SCHEMA, ORG_SCHEMA, SHARED_DEFS_ORG_SLICE, SHARED_DEFS_REVISION,
+    SHARED_DEFS_SEA_ORM_ADAPTER,
 };
 
 /// Default consumers cannot import write symbols. This doctest is compiled only

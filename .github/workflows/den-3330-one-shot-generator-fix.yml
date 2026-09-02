@@ -1,3 +1,4 @@
+# Rerun after restoring the crate's required read-only default feature boundary.
 name: DEN-3330 one-shot generator repair
 
 on:

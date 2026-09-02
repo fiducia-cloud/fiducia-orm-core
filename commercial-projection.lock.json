@@ -1,0 +1,43 @@
+{
+  "authority_status": "transitional-generated-projection",
+  "catalog": {
+    "column_count": 244,
+    "path": "schema/commercial.catalog.json",
+    "sha256": "952bb96a3867bd7b5acbb57b762d230a45e5ee4a9f0e2f341701f19c20f8433a",
+    "table_count": 22
+  },
+  "compatibility_repository": "fiducia-cloud/fiducia-orm-core",
+  "format": "fiducia.orm-projection-lock.v1",
+  "generator": {
+    "path": "tools/generate_commercial_projections.py",
+    "sha256": "7883112f3b4e975984c43cd31dd4d6ba645189774c54cd51b29cd569bbc5e5f8"
+  },
+  "outputs": {
+    "generated/commercial_diesel.rs": "2a505011e791621318b73c728397751dd35f8937f8c118a4a3afc54eff783f8a",
+    "generated/commercial_provenance.rs": "7dcc6f92e6bf2827cf8adce90136cc49ac77299ae595a935e0d80d95f1da747c",
+    "generated/commercial_sea_orm.rs": "cdb332ffaa49e58edf43459fa3780f01b73ffc9fb942ba23c2d3bcfa9ab1bd3c"
+  },
+  "planned_editable_repository": "fiducia-cloud/fiducia-lib-core",
+  "policy": "This lock describes generated compatibility projections only. Canonical SQL and live catalog verification remain migration authority; fiducia-lib-core becomes the editable projection authority when provisioned.",
+  "sources": {
+    "sql": {
+      "git_blob_sha1": "6d71044854007741bc029e1d3da6c386147f7314",
+      "path": "quote-system/db/0001_commercial_intake.sql",
+      "ref": "main",
+      "repository": "fiducia-cloud/fiducia-infra"
+    },
+    "typespec": {
+      "git_blob_sha1": "c9758fffc87378b9777f7fed67e778a1ba24bb31",
+      "path": "quote-system/contracts/main.tsp",
+      "ref": "main",
+      "repository": "fiducia-cloud/fiducia-infra"
+    },
+    "wire_json_schema": {
+      "draft": "2020-12",
+      "git_blob_sha1": "e0542e1837f708b63ea42e277e346fb969d9d1c9",
+      "path": "schema/commercial_intake.schema.json",
+      "ref": "main",
+      "repository": "fiducia-cloud/fiducia-interfaces"
+    }
+  }
+}

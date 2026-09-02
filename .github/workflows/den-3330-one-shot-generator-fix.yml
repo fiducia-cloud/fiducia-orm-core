@@ -1,4 +1,4 @@
-# Rerun after preserving both the read-only default and the independent write boundary.
+# Rerun after excluding deterministic Python bytecode from the bounded source repair.
 name: DEN-3330 one-shot generator repair
 
 on:

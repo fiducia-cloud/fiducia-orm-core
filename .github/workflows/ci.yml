@@ -30,6 +30,10 @@ jobs:
       - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           shared-key: orm-boundary
+      - name: Verify generated commercial projections
+        run: |
+          python3 -m py_compile tools/generate_commercial_projections.py
+          python3 tools/generate_commercial_projections.py --check
       - name: Format
         run: cargo fmt --all -- --check
       - name: Lint default and write surfaces

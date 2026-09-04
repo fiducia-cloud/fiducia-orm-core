@@ -4,9 +4,7 @@ use sea_orm::sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sea_orm::{ConnectionTrait, DatabaseConnection, SqlxPostgresConnector, Statement};
 
 use crate::{
-    error::OrmError,
-    generated::dual_orm_runtime::CONNECTION_STATE_SQL,
-    schema::ORG_SCHEMA,
+    error::OrmError, generated::dual_orm_runtime::CONNECTION_STATE_SQL, schema::ORG_SCHEMA,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -199,10 +197,7 @@ fn startup_options(role: Role) -> Vec<(&'static str, String)> {
 pub(crate) async fn inspect_connection(
     connection: &DatabaseConnection,
 ) -> Result<InternalConnectionState, OrmError> {
-    let statement = Statement::from_string(
-        connection.get_database_backend(),
-        CONNECTION_STATE_SQL,
-    );
+    let statement = Statement::from_string(connection.get_database_backend(), CONNECTION_STATE_SQL);
     let row = connection
         .query_one(statement)
         .await

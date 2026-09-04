@@ -32,8 +32,13 @@ jobs:
           shared-key: orm-boundary
       - name: Verify generated commercial projections
         run: |
-          python3 -m py_compile tools/generate_commercial_projections.py
+          python3 -m py_compile \
+            tools/generate_commercial_projections.py \
+            tools/generate_dual_orm_runtime.py \
+            tests/test_dual_orm_generation.py
           python3 tools/generate_commercial_projections.py --check
+          python3 tools/generate_dual_orm_runtime.py --check
+          python3 -m unittest -v tests/test_dual_orm_generation.py
       - name: Format
         run: cargo fmt --all -- --check
       - name: Lint default and write surfaces

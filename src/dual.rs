@@ -3,19 +3,19 @@
 //! this crate.
 
 use diesel::{
-    Connection, PgConnection, QueryableByName, RunQueryDsl, connection::SimpleConnection,
+    connection::SimpleConnection, Connection, PgConnection, QueryableByName, RunQueryDsl,
 };
 use tokio::task;
 
 use crate::{
-    ORG_SCHEMA, OrmError, ReadContext,
     connection::InternalConnectionState,
     generated::dual_orm_runtime::{CONNECTION_STATE_SQL, DUAL_ORM_ENGINES},
     read::{self, ConnectionState},
+    OrmError, ReadContext, ORG_SCHEMA,
 };
 
 #[cfg(feature = "read-write")]
-use crate::{WriteContext, write};
+use crate::{write, WriteContext};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum AccessMode {

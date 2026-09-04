@@ -3,7 +3,11 @@ use std::{fmt, time::Duration};
 use sea_orm::sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sea_orm::{ConnectionTrait, DatabaseConnection, SqlxPostgresConnector, Statement};
 
-use crate::{error::OrmError, schema::ORG_SCHEMA};
+use crate::{
+    error::OrmError,
+    generated::dual_orm_runtime::CONNECTION_STATE_SQL,
+    schema::ORG_SCHEMA,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ConnectPolicy {
@@ -197,8 +201,7 @@ pub(crate) async fn inspect_connection(
 ) -> Result<InternalConnectionState, OrmError> {
     let statement = Statement::from_string(
         connection.get_database_backend(),
-        "SELECT current_schema() AS schema_name, \
-         current_setting('default_transaction_read_only') AS transaction_read_only",
+        CONNECTION_STATE_SQL,
     );
     let row = connection
         .query_one(statement)

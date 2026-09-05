@@ -3,6 +3,7 @@ Cargo.lock
 /.vendor/.zed/
 .env
 .env.*
+<<<<<<< HEAD
 __pycache__/
 *.py[cod]
 
@@ -13,3 +14,13 @@ temp/
 # literally instead of matching the parent directory pattern.
 tmp/worktrees/
 temp/worktrees/
+# >>> ores fleet hygiene — managed block — equivalent rules kept for tooling
+tmp/temp/
+# <<< ores fleet hygiene <<<
+=======
+
+# >>> ores fleet hygiene — managed block, edits below are overwritten >>>
+tmp/temp/
+tmp/worktrees/
+# <<< ores fleet hygiene <<<
+>>>>>>> refs/remotes/origin/wip/land-uncommitted-20260905

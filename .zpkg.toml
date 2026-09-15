@@ -3,13 +3,15 @@ org = "fiducia-cloud"
 name = "fiducia-orm-core"
 version = "0.2.0"
 description = "Canonical opaque SeaORM and Diesel boundary for the fiducia-cloud organization"
+language = "rust"
 
 [package.repository]
 vcs = "git"
 url = "https://github.com/fiducia-cloud/fiducia-orm-core"
 
 [dependencies]
-"oresoftware/k8s-libs-and-shared-defs" = "^0.1.0"
+"fiducia-cloud/fiducia-interfaces" = "^0.1.0"
+"fiducia-cloud/fiducia-lib-core" = "^0.1.0"
 
 [publish]
 include_readme = true
@@ -17,8 +19,14 @@ tag_format = "v{version}"
 exclude = [
   ".env",
   ".env.*",
+  "env/dec/**",
   ".vendor/.zed/**",
+  ".zed/**",
+  ".zed-pack/**",
   "target/**",
+  "**/target/**",
+  "**/node_modules/**",
+  "**/.dart_tool/**",
   "**/*.log",
 ]
 

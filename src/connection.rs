@@ -4,7 +4,8 @@ use sea_orm::sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sea_orm::{ConnectionTrait, DatabaseConnection, SqlxPostgresConnector, Statement};
 
 use crate::{
-    error::OrmError, generated::dual_orm_runtime::CONNECTION_STATE_SQL, schema::ORG_SCHEMA,
+    error::OrmError, generated::dual_orm_runtime::CONNECTION_STATE_SQL,
+    profile::CapabilityProfile, schema::ORG_SCHEMA,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -109,45 +110,76 @@ enum Role {
     ReadWrite,
 }
 
+impl Role {
+    fn admitted_by(self, profile: CapabilityProfile) -> Result<(), OrmError> {
+        if profile.is_migrator() {
+            return Err(OrmError::policy(
+                "migrator capability is external to normal ORM runtime startup",
+            ));
+        }
+        match self {
+            Self::ReadOnly if profile.allows_read() => Ok(()),
+            #[cfg(feature = "read-write")]
+            Self::ReadWrite if profile.allows_write() => Ok(()),
+            _ => Err(OrmError::policy(
+                "database capability profile does not permit this runtime access",
+            )),
+        }
+    }
+}
+
 /// Open an opaque context whose every transaction starts read-only.
-pub async fn connect_read_only(database_url: &str) -> Result<ReadContext, OrmError> {
-    connect_read_only_with_policy(database_url, ConnectPolicy::default()).await
+pub async fn connect_read_only(
+    database_url: &str,
+    profile: CapabilityProfile,
+) -> Result<ReadContext, OrmError> {
+    connect_read_only_with_policy(database_url, profile, ConnectPolicy::default()).await
 }
 
 /// Open an opaque read context with an explicit pool policy.
 pub async fn connect_read_only_with_policy(
     database_url: &str,
+    profile: CapabilityProfile,
     policy: ConnectPolicy,
 ) -> Result<ReadContext, OrmError> {
-    let connection = connect(database_url, policy, Role::ReadOnly).await?;
+    let connection = connect(database_url, profile, policy, Role::ReadOnly).await?;
     Ok(ReadContext { connection })
 }
 
 /// Open an opaque write context. This symbol does not exist unless the caller
 /// explicitly enables the `read-write` feature.
 #[cfg(feature = "read-write")]
-pub async fn connect_read_write(database_url: &str) -> Result<WriteContext, OrmError> {
-    connect_read_write_with_policy(database_url, ConnectPolicy::default()).await
+pub async fn connect_read_write(
+    database_url: &str,
+    profile: CapabilityProfile,
+) -> Result<WriteContext, OrmError> {
+    connect_read_write_with_policy(database_url, profile, ConnectPolicy::default()).await
 }
 
 /// Open an opaque write context with an explicit pool policy.
 #[cfg(feature = "read-write")]
 pub async fn connect_read_write_with_policy(
     database_url: &str,
+    profile: CapabilityProfile,
     policy: ConnectPolicy,
 ) -> Result<WriteContext, OrmError> {
-    let connection = connect(database_url, policy, Role::ReadWrite).await?;
+    let connection = connect(database_url, profile, policy, Role::ReadWrite).await?;
     Ok(WriteContext { connection })
 }
 
 async fn connect(
     database_url: &str,
+    profile: CapabilityProfile,
     policy: ConnectPolicy,
     role: Role,
 ) -> Result<DatabaseConnection, OrmError> {
+    role.admitted_by(profile)?;
+
+    let application_name = format!("fiducia-orm-core-{}", profile.as_str());
     let options = database_url
         .parse::<PgConnectOptions>()
         .map_err(OrmError::database)?
+        .application_name(&application_name)
         .options(startup_options(role));
 
     let pool = PgPoolOptions::new()
@@ -243,12 +275,30 @@ mod tests {
             .any(|(key, _)| *key == "default_transaction_read_only"));
     }
 
+    #[test]
+    fn read_role_accepts_normal_profiles_and_rejects_migrator() {
+        assert!(Role::ReadOnly.admitted_by(CapabilityProfile::WebReadOnly).is_ok());
+        assert!(Role::ReadOnly.admitted_by(CapabilityProfile::WorkerReadOnly).is_ok());
+        assert!(Role::ReadOnly.admitted_by(CapabilityProfile::ApiReadWrite).is_ok());
+        assert!(Role::ReadOnly.admitted_by(CapabilityProfile::Migrator).is_err());
+    }
+
+    #[cfg(feature = "read-write")]
+    #[test]
+    fn write_role_requires_write_capable_profile() {
+        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::ApiReadWrite).is_ok());
+        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::WorkerReadWrite).is_ok());
+        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::WebReadOnly).is_err());
+        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::WorkerReadOnly).is_err());
+        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::Migrator).is_err());
+    }
+
     #[tokio::test]
     #[ignore = "requires a dedicated ORM_CORE_TEST_DATABASE_URL database"]
     async fn live_read_only_context_rejects_schema_ddl() {
         let database_url = std::env::var("ORM_CORE_TEST_DATABASE_URL")
             .expect("ORM_CORE_TEST_DATABASE_URL must target a disposable test database");
-        let context = connect_read_only(&database_url)
+        let context = connect_read_only(&database_url, CapabilityProfile::WebReadOnly)
             .await
             .expect("read-only connection must verify");
         let backend = context.connection().get_database_backend();

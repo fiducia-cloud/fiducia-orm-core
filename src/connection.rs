@@ -57,6 +57,7 @@ impl ConnectPolicy {
 #[derive(Clone)]
 pub struct ReadContext {
     connection: DatabaseConnection,
+    profile: CapabilityProfile,
 }
 
 impl fmt::Debug for ReadContext {
@@ -64,6 +65,7 @@ impl fmt::Debug for ReadContext {
         formatter
             .debug_struct("ReadContext")
             .field("schema", &ORG_SCHEMA)
+            .field("profile", &self.profile)
             .finish_non_exhaustive()
     }
 }
@@ -72,12 +74,17 @@ impl ReadContext {
     pub(crate) fn connection(&self) -> &DatabaseConnection {
         &self.connection
     }
+
+    pub(crate) const fn profile(&self) -> CapabilityProfile {
+        self.profile
+    }
 }
 
 #[cfg(feature = "read-write")]
 #[derive(Clone)]
 pub struct WriteContext {
     connection: DatabaseConnection,
+    profile: CapabilityProfile,
 }
 
 #[cfg(feature = "read-write")]
@@ -86,6 +93,7 @@ impl fmt::Debug for WriteContext {
         formatter
             .debug_struct("WriteContext")
             .field("schema", &ORG_SCHEMA)
+            .field("profile", &self.profile)
             .finish_non_exhaustive()
     }
 }
@@ -94,6 +102,10 @@ impl fmt::Debug for WriteContext {
 impl WriteContext {
     pub(crate) fn connection(&self) -> &DatabaseConnection {
         &self.connection
+    }
+
+    pub(crate) const fn profile(&self) -> CapabilityProfile {
+        self.profile
     }
 }
 
@@ -143,7 +155,10 @@ pub async fn connect_read_only_with_policy(
     policy: ConnectPolicy,
 ) -> Result<ReadContext, OrmError> {
     let connection = connect(database_url, profile, policy, Role::ReadOnly).await?;
-    Ok(ReadContext { connection })
+    Ok(ReadContext {
+        connection,
+        profile,
+    })
 }
 
 /// Open an opaque write context. This symbol does not exist unless the caller
@@ -164,7 +179,10 @@ pub async fn connect_read_write_with_policy(
     policy: ConnectPolicy,
 ) -> Result<WriteContext, OrmError> {
     let connection = connect(database_url, profile, policy, Role::ReadWrite).await?;
-    Ok(WriteContext { connection })
+    Ok(WriteContext {
+        connection,
+        profile,
+    })
 }
 
 async fn connect(

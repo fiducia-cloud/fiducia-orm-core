@@ -29,10 +29,7 @@ impl CapabilityProfile {
     pub const fn allows_read(self) -> bool {
         matches!(
             self,
-            Self::WebReadOnly
-                | Self::ApiReadWrite
-                | Self::WorkerReadOnly
-                | Self::WorkerReadWrite
+            Self::WebReadOnly | Self::ApiReadWrite | Self::WorkerReadOnly | Self::WorkerReadWrite
         )
     }
 

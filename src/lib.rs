@@ -30,10 +30,10 @@ mod schema;
 pub mod write;
 
 pub use connection::{
-    ConnectPolicy, ReadContext, connect_read_only, connect_read_only_with_policy,
+    connect_read_only, connect_read_only_with_policy, ConnectPolicy, ReadContext,
 };
 #[cfg(feature = "read-write")]
-pub use connection::{WriteContext, connect_read_write, connect_read_write_with_policy};
+pub use connection::{connect_read_write, connect_read_write_with_policy, WriteContext};
 #[cfg(feature = "commercial-diesel")]
 pub use dual::DualOrmConnectionState;
 pub use error::OrmError;

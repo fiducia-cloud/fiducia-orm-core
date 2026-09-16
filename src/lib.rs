@@ -30,14 +30,13 @@ mod schema;
 pub mod write;
 
 pub use connection::{
-    connect_read_only, connect_read_only_with_policy, ConnectPolicy, ReadContext,
+    ConnectPolicy, ReadContext, connect_read_only, connect_read_only_with_policy,
 };
 #[cfg(feature = "read-write")]
-pub use connection::{connect_read_write, connect_read_write_with_policy, WriteContext};
+pub use connection::{WriteContext, connect_read_write, connect_read_write_with_policy};
 #[cfg(feature = "commercial-diesel")]
 pub use dual::DualOrmConnectionState;
 pub use error::OrmError;
-pub use profile::CapabilityProfile;
 pub use generated::commercial_provenance::{
     COMMERCIAL_CATALOG_SHA256, COMMERCIAL_COLUMN_COUNT, COMMERCIAL_JSON_SCHEMA_GIT_BLOB_SHA1,
     COMMERCIAL_SQL_GIT_BLOB_SHA1, COMMERCIAL_TABLES, COMMERCIAL_TABLE_COUNT,
@@ -47,6 +46,7 @@ pub use generated::dual_orm_runtime::{
     CONNECTION_STATE_SQL, DUAL_ORM_ENGINES, DUAL_ORM_OPERATIONS, DUAL_ORM_RUNTIME_SCHEMA_VERSION,
     DUAL_ORM_SCHEMA_NAME,
 };
+pub use profile::CapabilityProfile;
 pub use schema::{
     COMMERCIAL_SCHEMA, ORG_SCHEMA, SHARED_DEFS_ORG_SLICE, SHARED_DEFS_REVISION,
     SHARED_DEFS_SEA_ORM_ADAPTER,

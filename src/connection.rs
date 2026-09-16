@@ -4,8 +4,8 @@ use sea_orm::sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sea_orm::{ConnectionTrait, DatabaseConnection, SqlxPostgresConnector, Statement};
 
 use crate::{
-    error::OrmError, generated::dual_orm_runtime::CONNECTION_STATE_SQL,
-    profile::CapabilityProfile, schema::ORG_SCHEMA,
+    error::OrmError, generated::dual_orm_runtime::CONNECTION_STATE_SQL, profile::CapabilityProfile,
+    schema::ORG_SCHEMA,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -277,20 +277,38 @@ mod tests {
 
     #[test]
     fn read_role_accepts_normal_profiles_and_rejects_migrator() {
-        assert!(Role::ReadOnly.admitted_by(CapabilityProfile::WebReadOnly).is_ok());
-        assert!(Role::ReadOnly.admitted_by(CapabilityProfile::WorkerReadOnly).is_ok());
-        assert!(Role::ReadOnly.admitted_by(CapabilityProfile::ApiReadWrite).is_ok());
-        assert!(Role::ReadOnly.admitted_by(CapabilityProfile::Migrator).is_err());
+        assert!(Role::ReadOnly
+            .admitted_by(CapabilityProfile::WebReadOnly)
+            .is_ok());
+        assert!(Role::ReadOnly
+            .admitted_by(CapabilityProfile::WorkerReadOnly)
+            .is_ok());
+        assert!(Role::ReadOnly
+            .admitted_by(CapabilityProfile::ApiReadWrite)
+            .is_ok());
+        assert!(Role::ReadOnly
+            .admitted_by(CapabilityProfile::Migrator)
+            .is_err());
     }
 
     #[cfg(feature = "read-write")]
     #[test]
     fn write_role_requires_write_capable_profile() {
-        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::ApiReadWrite).is_ok());
-        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::WorkerReadWrite).is_ok());
-        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::WebReadOnly).is_err());
-        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::WorkerReadOnly).is_err());
-        assert!(Role::ReadWrite.admitted_by(CapabilityProfile::Migrator).is_err());
+        assert!(Role::ReadWrite
+            .admitted_by(CapabilityProfile::ApiReadWrite)
+            .is_ok());
+        assert!(Role::ReadWrite
+            .admitted_by(CapabilityProfile::WorkerReadWrite)
+            .is_ok());
+        assert!(Role::ReadWrite
+            .admitted_by(CapabilityProfile::WebReadOnly)
+            .is_err());
+        assert!(Role::ReadWrite
+            .admitted_by(CapabilityProfile::WorkerReadOnly)
+            .is_err());
+        assert!(Role::ReadWrite
+            .admitted_by(CapabilityProfile::Migrator)
+            .is_err());
     }
 
     #[tokio::test]

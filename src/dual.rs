@@ -11,7 +11,7 @@ use crate::{
     connection::InternalConnectionState,
     generated::dual_orm_runtime::{CONNECTION_STATE_SQL, DUAL_ORM_ENGINES},
     read::{self, ConnectionState},
-    OrmError, ReadContext, ORG_SCHEMA,
+    CapabilityProfile, OrmError, ReadContext, ORG_SCHEMA,
 };
 
 #[cfg(feature = "read-write")]
@@ -69,55 +69,74 @@ impl DualOrmConnectionState {
 }
 
 /// Execute the generated connection-state query through SeaORM and Diesel
-/// using independently opened, read-only sessions.
-pub async fn verify_read_only(database_url: &str) -> Result<DualOrmConnectionState, OrmError> {
-    let sea_context = crate::connect_read_only(database_url).await?;
+/// using independently opened, read-only sessions with the same explicit
+/// runtime capability identity.
+pub async fn verify_read_only(
+    database_url: &str,
+    profile: CapabilityProfile,
+) -> Result<DualOrmConnectionState, OrmError> {
+    let sea_context = crate::connect_read_only(database_url, profile).await?;
     verify_read_context(&sea_context, database_url).await
 }
 
 /// Reuse an already verified SeaORM read context and independently verify the
-/// same policy through Diesel.
+/// same policy through Diesel using that context's capability identity.
 pub async fn verify_read_context(
     sea_context: &ReadContext,
     database_url: &str,
 ) -> Result<DualOrmConnectionState, OrmError> {
     let sea_state = read::connection_state(sea_context).await?;
-    let diesel_state = diesel_state_async(database_url, AccessMode::ReadOnly).await?;
+    let diesel_state =
+        diesel_state_async(database_url, AccessMode::ReadOnly, sea_context.profile()).await?;
     reconcile_states(sea_state, diesel_state, true)
 }
 
 /// Execute the generated connection-state query through SeaORM and Diesel
-/// using independently opened read/write sessions. API consumers only.
+/// using independently opened read/write sessions with the same explicit
+/// runtime capability identity. API consumers only.
 #[cfg(feature = "read-write")]
-pub async fn verify_read_write(database_url: &str) -> Result<DualOrmConnectionState, OrmError> {
-    let sea_context = crate::connect_read_write(database_url).await?;
+pub async fn verify_read_write(
+    database_url: &str,
+    profile: CapabilityProfile,
+) -> Result<DualOrmConnectionState, OrmError> {
+    let sea_context = crate::connect_read_write(database_url, profile).await?;
     verify_write_context(&sea_context, database_url).await
 }
 
 /// Reuse an already verified SeaORM write context and independently verify the
-/// same policy through Diesel. API consumers only.
+/// same policy through Diesel using that context's capability identity. API consumers only.
 #[cfg(feature = "read-write")]
 pub async fn verify_write_context(
     sea_context: &WriteContext,
     database_url: &str,
 ) -> Result<DualOrmConnectionState, OrmError> {
     let sea_state = write::connection_state(sea_context).await?;
-    let diesel_state = diesel_state_async(database_url, AccessMode::ReadWrite).await?;
+    let diesel_state =
+        diesel_state_async(database_url, AccessMode::ReadWrite, sea_context.profile()).await?;
     reconcile_states(sea_state, diesel_state, false)
 }
 
 async fn diesel_state_async(
     database_url: &str,
     access_mode: AccessMode,
+    profile: CapabilityProfile,
 ) -> Result<ConnectionState, OrmError> {
     let database_url = database_url.to_owned();
-    task::spawn_blocking(move || diesel_state(&database_url, access_mode))
+    task::spawn_blocking(move || diesel_state(&database_url, access_mode, profile))
         .await
         .map_err(OrmError::database)?
 }
 
-fn diesel_state(database_url: &str, access_mode: AccessMode) -> Result<ConnectionState, OrmError> {
+fn diesel_state(
+    database_url: &str,
+    access_mode: AccessMode,
+    profile: CapabilityProfile,
+) -> Result<ConnectionState, OrmError> {
     let mut connection = PgConnection::establish(database_url).map_err(OrmError::database)?;
+    let application_name = format!("fiducia-orm-core-{}-diesel", profile.as_str());
+    connection
+        .batch_execute(&format!("SET application_name TO '{application_name}'"))
+        .map_err(OrmError::database)?;
     match access_mode {
         AccessMode::ReadOnly => connection
             .batch_execute(&format!(

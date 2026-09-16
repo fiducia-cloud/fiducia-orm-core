@@ -22,6 +22,7 @@ pub mod dual;
 mod error;
 #[doc(hidden)]
 pub mod generated;
+mod profile;
 pub mod read;
 mod schema;
 
@@ -45,6 +46,7 @@ pub use generated::dual_orm_runtime::{
     CONNECTION_STATE_SQL, DUAL_ORM_ENGINES, DUAL_ORM_OPERATIONS, DUAL_ORM_RUNTIME_SCHEMA_VERSION,
     DUAL_ORM_SCHEMA_NAME,
 };
+pub use profile::CapabilityProfile;
 pub use schema::{
     COMMERCIAL_SCHEMA, ORG_SCHEMA, SHARED_DEFS_ORG_SLICE, SHARED_DEFS_REVISION,
     SHARED_DEFS_SEA_ORM_ADAPTER,

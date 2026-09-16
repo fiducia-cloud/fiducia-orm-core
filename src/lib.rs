@@ -22,6 +22,7 @@ pub mod dual;
 mod error;
 #[doc(hidden)]
 pub mod generated;
+mod profile;
 pub mod read;
 mod schema;
 
@@ -36,6 +37,7 @@ pub use connection::{connect_read_write, connect_read_write_with_policy, WriteCo
 #[cfg(feature = "commercial-diesel")]
 pub use dual::DualOrmConnectionState;
 pub use error::OrmError;
+pub use profile::CapabilityProfile;
 pub use generated::commercial_provenance::{
     COMMERCIAL_CATALOG_SHA256, COMMERCIAL_COLUMN_COUNT, COMMERCIAL_JSON_SCHEMA_GIT_BLOB_SHA1,
     COMMERCIAL_SQL_GIT_BLOB_SHA1, COMMERCIAL_TABLES, COMMERCIAL_TABLE_COUNT,

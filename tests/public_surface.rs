@@ -42,7 +42,11 @@ fn every_write_symbol_is_feature_gated() {
 }
 
 #[test]
-fn shared_schema_source_is_exact_and_external() {
+fn schema_source_lock_and_package_authorities_are_exact() {
+    // The generated ORM/schema slice remains provenance-locked to the reviewed
+    // shared-defs source. Package-level contract authority, however, belongs to
+    // the same-org interfaces/lib-core peers and must not regress to importing
+    // the centralized shared-defs repository as an application dependency.
     let lock = read("shared-defs.lock.json");
     for contract in [
         "c8bdc06d74746acc6439f9527ebd02697fdf028b",
@@ -54,7 +58,19 @@ fn shared_schema_source_is_exact_and_external() {
     }
 
     let zpkg = read(".zpkg.toml");
-    assert!(zpkg.contains("\"oresoftware/k8s-libs-and-shared-defs\""));
+    for same_org_authority in [
+        "\"fiducia-cloud/fiducia-interfaces\"",
+        "\"fiducia-cloud/fiducia-lib-core\"",
+    ] {
+        assert!(
+            zpkg.contains(same_org_authority),
+            "same-org package authority lost {same_org_authority}"
+        );
+    }
+    assert!(
+        !zpkg.contains("\"oresoftware/k8s-libs-and-shared-defs\""),
+        "central shared-defs must remain provenance/schema input, not a package dependency"
+    );
 }
 
 #[test]

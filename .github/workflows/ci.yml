@@ -24,6 +24,12 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact pull-request head
+        if: github.event_name == 'pull_request'
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
       - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           components: rustfmt, clippy
@@ -41,11 +47,13 @@ jobs:
           python3 -m unittest -v tests/test_dual_orm_generation.py
       - name: Format
         run: cargo fmt --all -- --check
-      - name: Lint default and write surfaces
+      - name: Lint default and SeaORM + Diesel write surfaces
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Test default read-only surface
         run: cargo test --all-targets
-      - name: Test explicit read-write surface
+      - name: Test explicit SeaORM + Diesel read-write surface
         run: cargo test --all-targets --all-features
       - name: Compile documentation and compile-fail policy examples
         run: cargo test --doc
+      - name: Verify tracked source immutability
+        run: git diff --exit-code

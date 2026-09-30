@@ -42,19 +42,25 @@ fn every_write_symbol_is_feature_gated() {
 }
 
 #[test]
-fn shared_schema_source_is_exact_and_external() {
-    let lock = read("shared-defs.lock.json");
-    for contract in [
-        "c8bdc06d74746acc6439f9527ebd02697fdf028b",
-        "\"org_slice\": \"fiducia-cloud\"",
-        "\"schema\": \"fiducia\"",
-        "pg-defs/generated/rust/sea-orm",
-    ] {
-        assert!(lock.contains(contract), "shared-defs lock lost {contract}");
-    }
-
+fn product_local_contract_home_is_explicit() {
     let zpkg = read(".zpkg.toml");
-    assert!(zpkg.contains("\"oresoftware/k8s-libs-and-shared-defs\""));
+    for dependency in [
+        "\"fiducia-cloud/fiducia-interfaces\"",
+        "\"fiducia-cloud/fiducia-lib-core\"",
+    ] {
+        assert!(
+            zpkg.contains(dependency),
+            "product-local contract dependency missing {dependency}"
+        );
+    }
+    assert!(
+        !zpkg.contains("oresoftware/k8s-libs-and-shared-defs"),
+        "centralized shared-defs must not remain ORM authority"
+    );
+
+    let source_lock = read("contracts/source-lock.toml");
+    assert!(source_lock.contains("interfaces_repository = \"fiducia-cloud/fiducia-interfaces\""));
+    assert!(source_lock.contains("format = \"ores.core-source-lock/v1\""));
 }
 
 #[test]

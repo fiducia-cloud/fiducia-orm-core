@@ -1,0 +1,60 @@
+name: DEN-3043 one-shot .zpkg.lock refresh
+
+on:
+  push:
+    branches:
+      - agent/DEN-3043-exact-head-dual-orm-20260929
+
+permissions:
+  contents: write
+
+env:
+  ZED_PKG_INTERACTIVE: false
+  GITHUB_TOKEN: ${{ github.token }}
+
+jobs:
+  refresh-zed-lock:
+    if: github.actor == 'ORESoftware'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact pushed head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Install pinned Zed CLI v0.3.0
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          a="$RUNNER_TEMP/zed.tar.gz"
+          d="$RUNNER_TEMP/zed-release"
+          curl --fail --location --retry 3 --retry-all-errors -o "$a" https://github.com/zed-pkg/zed-cli/releases/download/v0.3.0/zed-x86_64-unknown-linux-gnu.tar.gz
+          printf '%s  %s\n' f87576bc289e43ed647902527e7be70566445d2f1fd11249f067ab35547d4b8a "$a" | sha256sum --check --strict
+          mkdir -p "$d" "$HOME/.local/bin"
+          tar -xzf "$a" -C "$d"
+          z="$(find "$d" -type f -name zed -perm -111 -print -quit)"
+          test -n "$z"
+          install -m 0755 "$z" "$HOME/.local/bin/zed"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Regenerate and commit .zpkg.lock only
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          zed install
+          test -f .zpkg.lock
+          git diff --exit-code -- . ':(exclude).zpkg.lock'
+          if git diff --quiet -- .zpkg.lock && ! git ls-files --error-unmatch .zpkg.lock >/dev/null 2>&1; then
+            echo '.zpkg.lock was not generated' >&2
+            exit 1
+          fi
+          if git diff --quiet -- .zpkg.lock && git ls-files --error-unmatch .zpkg.lock >/dev/null 2>&1; then
+            echo '.zpkg.lock already current'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .zpkg.lock
+          test "$(git diff --cached --name-only)" = '.zpkg.lock'
+          git commit -m 'DEN-3043 seal Zed dependency lock'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

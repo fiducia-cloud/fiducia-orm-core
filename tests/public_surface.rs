@@ -53,8 +53,14 @@ fn shared_schema_source_is_exact_and_external() {
         assert!(lock.contains(contract), "shared-defs lock lost {contract}");
     }
 
+    // Zed resolves product-facing package edges through the same-org interface
+    // and lib-core packages. The exact external shared-defs source is pinned by
+    // shared-defs.lock.json above; reintroducing it as a direct Zed dependency
+    // would create a second package-authority path.
     let zpkg = read(".zpkg.toml");
-    assert!(zpkg.contains("\"oresoftware/k8s-libs-and-shared-defs\""));
+    assert!(zpkg.contains("\"fiducia-cloud/fiducia-interfaces\""));
+    assert!(zpkg.contains("\"fiducia-cloud/fiducia-lib-core\""));
+    assert!(!zpkg.contains("\"oresoftware/k8s-libs-and-shared-defs\""));
 }
 
 #[test]

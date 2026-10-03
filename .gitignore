@@ -3,7 +3,16 @@ Cargo.lock
 /.vendor/.zed/
 .env
 .env.*
+__pycache__/
+*.py[cod]
 
+# Local temporary directories and Git worktrees (DEN-3956).
+tmp/
+temp/
+# Explicit worktree paths are retained for tools that inspect path rules
+# literally instead of matching the parent directory pattern.
+tmp/worktrees/
+temp/worktrees/
 # >>> ores fleet hygiene — managed block, edits below are overwritten >>>
 tmp/temp/
 tmp/worktrees/

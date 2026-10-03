@@ -1,5 +1,8 @@
-/// PostgreSQL/CockroachDB schema owned by the Fiducia Cloud service boundary.
+/// PostgreSQL/CockroachDB schema owned by the original Fiducia service boundary.
 pub const ORG_SCHEMA: &str = "fiducia";
+
+/// PostgreSQL schema for commercial intake, quotes, support, SLA, and contracts.
+pub const COMMERCIAL_SCHEMA: &str = "fiducia_commercial";
 
 /// Organization slice consumed from the canonical shared-definitions repo.
 pub const SHARED_DEFS_ORG_SLICE: &str = "fiducia-cloud";

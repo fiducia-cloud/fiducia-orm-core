@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.fiducia.cloud/orm/dual-orm-runtime.v1.schema.json",
+  "title": "Fiducia dual ORM runtime contract",
+  "description": "Independent JSON Schema authority for opaque SeaORM and Diesel connection probes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "schemaName", "engines", "operations"],
+  "properties": {
+    "schemaVersion": {"const": "fiducia.dual-orm-runtime.v1"},
+    "schemaName": {"const": "fiducia"},
+    "engines": {
+      "type": "array",
+      "prefixItems": [
+        {"const": "sea_orm"},
+        {"const": "diesel"}
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "operations": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operation", "accessMode"],
+          "properties": {
+            "operation": {"const": "read_connection_state"},
+            "accessMode": {"const": "read_only"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["operation", "accessMode"],
+          "properties": {
+            "operation": {"const": "write_connection_state"},
+            "accessMode": {"const": "read_write"}
+          }
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "fiducia.dual-orm-runtime.v1",
+      "schemaName": "fiducia",
+      "engines": ["sea_orm", "diesel"],
+      "operations": [
+        {"operation": "read_connection_state", "accessMode": "read_only"},
+        {"operation": "write_connection_state", "accessMode": "read_write"}
+      ]
+    }
+  ]
+}
